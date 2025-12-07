@@ -1,0 +1,30 @@
+{% extends 'students/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<form method="POST" style="max-width: 500px; margin: 0 auto;">
+    {% csrf_token %}
+    
+    {% for field in form %}
+    <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+            <p style="color: #dc3545; font-size: 14px; margin-top: 5px;">
+                {{ field.errors|first }}
+            </p>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <div style="display: flex; gap: 10px; margin-top: 30px;">
+        <button type="submit" class="btn btn-primary">
+            {% if student %}Update Student{% else %}Add Student{% endif %}
+        </button>
+        <a href="{% url 'student_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

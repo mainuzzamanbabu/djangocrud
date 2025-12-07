@@ -1,0 +1,23 @@
+{% extends 'students/base.html' %}
+
+{% block title %}Delete Student{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 40px;">
+    <h1 style="color: #dc3545;">⚠️ Delete Student</h1>
+    
+    <p style="font-size: 18px; margin: 30px 0;">
+        Are you sure you want to delete <strong>"{{ student.name }}"</strong>?
+    </p>
+    
+    <p style="color: #666;">
+        Roll Number: {{ student.roll_number }} | Class: {{ student.get_student_class_display }}
+    </p>
+    
+    <form method="POST" style="margin-top: 30px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a href="{% url 'student_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
