@@ -8,14 +8,68 @@
     <a href="{% url 'student_add' %}" class="btn btn-primary">+ Add New Student</a>
 </div>
 
+<!-- ========== 🆕 SEARCH & FILTER SECTION ========== -->
+<div class="search-filter-section">
+    <form method="GET" action="" class="search-form">
+        
+        <!-- 🔍 Search Box -->
+        <div class="search-box">
+            <input type="text" 
+                   name="search" 
+                   placeholder="🔍 Search by name, roll or email..."
+                   value="{{ search_query }}"
+                   class="search-input">
+        </div>
+        
+        <!-- 🎛️ Class Filter Dropdown -->
+        <div class="filter-box">
+            <select name="class" class="filter-select">
+                <option value="">All Classes</option>
+                {% for value, label in class_choices %}
+                    <option value="{{ value }}" {% if class_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Keep current sort when searching -->
+        <input type="hidden" name="sort" value="{{ sort_by }}">
+        
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary">Search</button>
+        
+        <!-- Reset Button -->
+        {% if search_query or class_filter %}
+            <a href="{% url 'student_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
 {% if students %}
 <table>
     <thead>
         <tr>
             <th>#</th>
-            <th>Name</th>
-            <th>Roll Number</th>
-            <th>Class</th>
+            <!-- ↕️ Sortable Column Headers -->
+            <th>
+                <a href="?search={{ search_query }}&class={{ class_filter }}&sort={% if sort_by == 'name' %}-name{% else %}name{% endif %}" 
+                   class="sort-link">
+                    Name {% if sort_by == 'name' %}↑{% elif sort_by == '-name' %}↓{% else %}↕{% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?search={{ search_query }}&class={{ class_filter }}&sort={% if sort_by == 'roll_number' %}-roll_number{% else %}roll_number{% endif %}" 
+                   class="sort-link">
+                    Roll {% if sort_by == 'roll_number' %}↑{% elif sort_by == '-roll_number' %}↓{% else %}↕{% endif %}
+                </a>
+            </th>
+            <th>
+                <a href="?search={{ search_query }}&class={{ class_filter }}&sort={% if sort_by == 'student_class' %}-student_class{% else %}student_class{% endif %}" 
+                   class="sort-link">
+                    Class {% if sort_by == 'student_class' %}↑{% elif sort_by == '-student_class' %}↓{% else %}↕{% endif %}
+                </a>
+            </th>
             <th>Email</th>
             <th>Actions</th>
         </tr>
@@ -39,37 +93,44 @@
     </tbody>
 </table>
 
-<!-- ========== PAGINATION ========== -->
+<!-- ========== PAGINATION (Updated to preserve search & filter) ========== -->
 {% if students.has_other_pages %}
 <div class="pagination">
     {% if students.has_previous %}
-        <a href="?page=1">« First</a>
-        <a href="?page={{ students.previous_page_number }}">Previous</a>
+        <a href="?page=1&search={{ search_query }}&class={{ class_filter }}&sort={{ sort_by }}">« First</a>
+        <a href="?page={{ students.previous_page_number }}&search={{ search_query }}&class={{ class_filter }}&sort={{ sort_by }}">Previous</a>
     {% endif %}
     
     {% for num in students.paginator.page_range %}
         {% if students.number == num %}
             <span class="current">{{ num }}</span>
         {% elif num > students.number|add:'-3' and num < students.number|add:'3' %}
-            <a href="?page={{ num }}">{{ num }}</a>
+            <a href="?page={{ num }}&search={{ search_query }}&class={{ class_filter }}&sort={{ sort_by }}">{{ num }}</a>
         {% endif %}
     {% endfor %}
     
     {% if students.has_next %}
-        <a href="?page={{ students.next_page_number }}">Next</a>
-        <a href="?page={{ students.paginator.num_pages }}">Last »</a>
+        <a href="?page={{ students.next_page_number }}&search={{ search_query }}&class={{ class_filter }}&sort={{ sort_by }}">Next</a>
+        <a href="?page={{ students.paginator.num_pages }}&search={{ search_query }}&class={{ class_filter }}&sort={{ sort_by }}">Last »</a>
     {% endif %}
 </div>
 {% endif %}
 
 <p style="text-align: center; margin-top: 15px; color: #666;">
     Showing {{ students.start_index }} - {{ students.end_index }} of {{ students.paginator.count }} students
+    {% if search_query %} (filtered by "{{ search_query }}"){% endif %}
+    {% if class_filter %} (Class {{ class_filter }}){% endif %}
 </p>
 
 {% else %}
 <div class="empty-state">
-    <p>No students found.</p>
-    <a href="{% url 'student_add' %}" class="btn btn-primary">Add Your First Student</a>
+    {% if search_query or class_filter %}
+        <p>No students found matching your criteria.</p>
+        <a href="{% url 'student_list' %}" class="btn btn-primary">Show All Students</a>
+    {% else %}
+        <p>No students found.</p>
+        <a href="{% url 'student_add' %}" class="btn btn-primary">Add Your First Student</a>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

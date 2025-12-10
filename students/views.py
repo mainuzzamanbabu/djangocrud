@@ -1,23 +1,56 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
+from django.db.models import Q  # 🆕 Import Q for OR conditions
 from .models import Student
 from .forms import StudentForm
 
 
-# ========== LIST VIEW (with Pagination) ==========
+# ========== LIST VIEW (with Search, Filter, Sorting & Pagination) ==========
 def student_list(request):
-    """Display all students with pagination (10 per page)"""
-    student_queryset = Student.objects.all()
+    """Display students with search, filter, sorting and pagination"""
     
-    # Pagination: 10 items per page
-    paginator = Paginator(student_queryset, 10)
+    # Start with all students
+    students = Student.objects.all()
+    
+    # 🔍 SEARCH FUNCTIONALITY
+    search_query = request.GET.get('search', '')
+    if search_query:
+        students = students.filter(
+            Q(name__icontains=search_query) |           # Search in name
+            Q(roll_number__icontains=search_query) |    # Search in roll
+            Q(email__icontains=search_query)            # Search in email
+        )
+    
+    # 🎛️ FILTER BY CLASS
+    class_filter = request.GET.get('class', '')
+    if class_filter:
+        students = students.filter(student_class=class_filter)
+    
+    # ↕️ SORTING
+    sort_by = request.GET.get('sort', '-created_at')  # Default: newest first
+    # Validate sort field to prevent errors
+    allowed_sort_fields = ['name', '-name', 'roll_number', '-roll_number', 
+                           'student_class', '-student_class', 'created_at', '-created_at']
+    if sort_by in allowed_sort_fields:
+        students = students.order_by(sort_by)
+    else:
+        students = students.order_by('-created_at')
+    
+    # 📄 PAGINATION (10 per page)
+    paginator = Paginator(students, 10)
     page_number = request.GET.get('page')
     students = paginator.get_page(page_number)
     
-    return render(request, 'students/student_list.html', {
-        'students': students
-    })
+    # 📦 Pass everything to template
+    context = {
+        'students': students,
+        'search_query': search_query,
+        'class_filter': class_filter,
+        'sort_by': sort_by,
+        'class_choices': Student.CLASS_CHOICES,  # For dropdown
+    }
+    return render(request, 'students/student_list.html', context)
 
 
 # ========== ADD VIEW ==========
